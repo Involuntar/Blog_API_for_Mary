@@ -74,3 +74,32 @@ def edit_state(id:int, state:pyd.CreateState, db:Session=Depends(get_db)):
     db.add(state_db)
     db.commit()
     return state_db
+
+@app.delete("/api/post/{id}")
+def delete_state(id:int, db:Session=Depends(get_db)):
+    state_db = db.query(m.State).filter(
+        m.State.id == id
+    ).first()
+    if not state_db:
+        raise HTTPException(404, "Такой статьи не существует!")
+    db.delete(state_db)
+    db.commit()
+
+    return {"details": "Статья удалена"}
+
+
+@app.get("/api/comments", response_model=List[pyd.SchemeComment])
+def get_comments(db:Session=Depends(get_db)):
+    comments = db.query(m.Comment).all()
+    if not comments:
+        raise HTTPException(404, "Комментариев нет!")
+    return comments
+
+@app.get("/api/comment/{id}", response_model=pyd.SchemeComment)
+def get_comment(id:int, db:Session=Depends(get_db)):
+    comment = db.query(m.Comment).filter(
+        m.Comment.id == id
+    ).first()
+    if not comment:
+        raise HTTPException(404, "Такого комментария не существует!")
+    return comment

@@ -6,3 +6,7 @@ class SchemeState(BaseState):
     status: BaseStatus
     autor: BaseUser
     category: BaseCategory
+
+class SchemeComment(BaseComment):
+    state: BaseState
+    user: BaseUser

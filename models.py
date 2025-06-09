@@ -58,6 +58,7 @@ class Comment(Base):
     date = Column(DateTime())
     state_id = Column(Integer, ForeignKey("states.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
+    
     state = relationship("State", backref="commments")
     user = relationship("User", backref="comments")
     
