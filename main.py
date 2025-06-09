@@ -55,3 +55,22 @@ def post_state(state:pyd.CreateState, db:Session=Depends(get_db)):
     db.add(state_db)
     db.commit()
     return state_db
+
+@app.put("/api/post/{id}", response_model=pyd.SchemeState)
+def edit_state(id:int, state:pyd.CreateState, db:Session=Depends(get_db)):
+    state_db = db.query(m.State).filter(
+        m.State.id == id
+    ).first()
+    if not state_db:
+        raise HTTPException(404, "Такой статьи не существует!")
+
+    state_db.title = state.title
+    state_db.content = state.content
+    state_db.date_publication = state.date_publication
+    state_db.status_id = state.status_id
+    state_db.author_id = state.author_id
+    state_db.category_id = state.category_id
+
+    db.add(state_db)
+    db.commit()
+    return state_db
