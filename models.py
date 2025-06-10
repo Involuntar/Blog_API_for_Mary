@@ -21,6 +21,7 @@ class User(Base):
     password = Column(String(255), nullable=False)
     role_id = Column(Integer, ForeignKey("roles.id"))
     created_at = Column(DateTime(), server_default=func.now())
+    
     role = relationship("Role", backref="users")
     
 class Status(Base):
@@ -37,7 +38,7 @@ class State(Base):
     status_id =  Column(Integer, ForeignKey("statuses.id"))
     # likes_amount = Column(Integer)
     author_id = Column(Integer, ForeignKey("users.id"))
-    category_id = Column(Integer, ForeignKey("categories.id"))
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
 
     status = relationship("Status", backref="states")
     autor = relationship("User", backref="states")

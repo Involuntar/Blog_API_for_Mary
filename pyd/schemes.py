@@ -5,7 +5,7 @@ class SchemeState(BaseState):
     likes: List[BaseUser]
     status: BaseStatus
     autor: BaseUser
-    category: BaseCategory
+    category: None|BaseCategory
 
 class SchemeComment(BaseComment):
     state: BaseState
