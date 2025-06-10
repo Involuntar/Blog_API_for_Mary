@@ -10,3 +10,6 @@ class SchemeState(BaseState):
 class SchemeComment(BaseComment):
     state: BaseState
     user: BaseUser
+
+class SchemeUser(BaseUser):
+    role: BaseRole
