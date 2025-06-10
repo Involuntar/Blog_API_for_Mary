@@ -28,4 +28,6 @@ class CreateState(BaseModel):
 class CreateComment(BaseModel):
     text: str = Field(example="Спасибо, очень вкусно")
     date: datetime = Field(example="2025-06-01 21:02:00")
+    state_id: int = Field(example=1)
+    user_id: int = Field(example=1)
     
