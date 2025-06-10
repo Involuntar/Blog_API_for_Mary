@@ -40,6 +40,45 @@ def login_user(user:pyd.LoginUser, db:Session=Depends(get_db)):
         return {"token": auth_handler.encode_token(user_db.id, user_db.role_id)}
     raise HTTPException(400, "Доступ запрещён!")
 
+
+@app.patch("/api/post/{id}/like")
+def like_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_handler.auth_wrapper)):
+    state = db.query(m.State).filter(
+        m.State.id == id
+    ).first()
+    if not state:
+        raise HTTPException(404, "Такой статьи не существует!")
+    user_db = db.query(m.User).filter(
+        m.User.id == access["user_id"]
+    ).first()
+    if user_db in state.likes:
+        raise HTTPException(400, "Вы уже ставили лайк этой статье!")
+    state.likes.append(user_db)
+    db.add(state)
+    db.commit()
+
+    return {"details": "Лайк оставлен!"}
+
+
+@app.patch("/api/post/{id}/unlike")
+def unlike_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_handler.auth_wrapper)):
+    state = db.query(m.State).filter(
+        m.State.id == id
+    ).first()
+    if not state:
+        raise HTTPException(404, "Такой статьи не существует!")
+    user_db = db.query(m.User).filter(
+        m.User.id == access["user_id"]
+    ).first()
+    if user_db not in state.likes:
+        raise HTTPException(400, "Вы не оставляли лайк этой статье!")
+    state.likes.remove(user_db)
+    db.add(state)
+    db.commit()
+    
+    return {"details": "Лайк убран!"}
+
+
 @app.get("/api/posts", response_model=List[pyd.SchemeState])
 def get_all_states(limit:None|int=Query(10,lt=100), page:None|int=Query(1),category:None|int=Query(None),status:None|int=Query(None),db: Session = Depends(get_db)):
     states = db.query(m.State)
@@ -107,13 +146,14 @@ def edit_state(id:int, state:pyd.UpdateState, db:Session=Depends(get_db), access
     state_db.author_id = state.author_id
     state_db.category_id = state.category_id
 
-    state_db.likes = []
-    for like_id in state.likes_id:
-        user_db = db.query(m.User).filter(m.User.id == like_id).first()
-        if user_db:
-            state_db.likes.append(user_db)
-        else:
-            raise HTTPException(status_code=404, detail=f"Пользователь с id:{like_id} не найден!")
+    if access["role_id"] == 3:
+        state_db.likes = []
+        for like_id in state.likes_id:
+            user_db = db.query(m.User).filter(m.User.id == like_id).first()
+            if user_db:
+                state_db.likes.append(user_db)
+            else:
+                raise HTTPException(status_code=404, detail=f"Пользователь с id:{like_id} не найден!")
 
     db.add(state_db)
     db.commit()
