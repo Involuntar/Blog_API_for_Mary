@@ -53,7 +53,10 @@ def like_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_ha
     ).first()
     if user_db in state.likes:
         raise HTTPException(400, "Вы уже ставили лайк этой статье!")
+    
     state.likes.append(user_db)
+    state.likes_amount = len(state.likes)
+
     db.add(state)
     db.commit()
 
@@ -72,7 +75,10 @@ def unlike_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_
     ).first()
     if user_db not in state.likes:
         raise HTTPException(400, "Вы не оставляли лайк этой статье!")
+    
     state.likes.remove(user_db)
+    state.likes_amount = len(state.likes)
+
     db.add(state)
     db.commit()
     
@@ -80,12 +86,18 @@ def unlike_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_
 
 
 @app.get("/api/posts", response_model=List[pyd.SchemeState])
-def get_all_states(limit:None|int=Query(10,lt=100), page:None|int=Query(1),category:None|int=Query(None),status:None|int=Query(None),db: Session = Depends(get_db)):
+def get_all_states(limit:None|int=Query(10,lt=100), page:None|int=Query(1), 
+                   category:None|int=Query(None), status:None|int=Query(None), 
+                   order_by:str=Query("desc"), db: Session = Depends(get_db)):
     states = db.query(m.State)
     if status:
         states = states.filter(m.State.status_id == status)
     if category:
         states = states.filter(m.State.category_id == category)
+    if order_by == "asc":
+        states = states.order_by(m.State.likes_amount.asc())
+    if order_by == "desc":
+        states = states.order_by(m.State.likes_amount.desc())
     if limit:
         states = states[(page-1)*limit:page*limit]
         if not states:
@@ -154,6 +166,8 @@ def edit_state(id:int, state:pyd.UpdateState, db:Session=Depends(get_db), access
                 state_db.likes.append(user_db)
             else:
                 raise HTTPException(status_code=404, detail=f"Пользователь с id:{like_id} не найден!")
+
+    state_db.likes_amount = len(state_db.likes)
 
     db.add(state_db)
     db.commit()
