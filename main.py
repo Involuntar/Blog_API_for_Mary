@@ -6,7 +6,11 @@ from typing import List
 import pyd
 from auth import auth_handler
 import bcrypt
+import logging
+import datetime
 
+
+logging.basicConfig(level=logging.INFO, filename="py_log.log",filemode="w")
 
 app = FastAPI()
 
@@ -27,6 +31,7 @@ def register_user(user:pyd.CreateUser, db:Session=Depends(get_db)):
     db.add(user_db)
     db.commit()
 
+    logging.info(f"User: {user_db.name} registred at {datetime.datetime.now()}")
     return user_db
 
 @app.post("/api/login")
@@ -37,6 +42,7 @@ def login_user(user:pyd.LoginUser, db:Session=Depends(get_db)):
     if not user_db:
         raise HTTPException(404, "Пользователь не найден!")
     if auth_handler.verify_password(user.password, user_db.password):
+        logging.info(f"User: {user_db.name} logged in at {datetime.datetime.now()}")
         return {"token": auth_handler.encode_token(user_db.id, user_db.role_id)}
     raise HTTPException(400, "Доступ запрещён!")
 
@@ -60,6 +66,7 @@ def like_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_ha
     db.add(state)
     db.commit()
 
+    logging.info(f"User: {user_db.name} liked state: {state.id} at {datetime.datetime.now()}")
     return {"details": "Лайк оставлен!"}
 
 
@@ -82,6 +89,7 @@ def unlike_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_
     db.add(state)
     db.commit()
     
+    logging.info(f"User: {user_db.name} unliked state: {state.id} at {datetime.datetime.now()}")
     return {"details": "Лайк убран!"}
 
 
@@ -137,6 +145,8 @@ def create_state(state:pyd.CreateState, db:Session=Depends(get_db), access:m.Use
 
     db.add(state_db)
     db.commit()
+
+    logging.info(f"User with id: {access["user_id"]} created state: {state_db.id} at {datetime.datetime.now()}")
     return state_db
 
 @app.put("/api/post/{id}", response_model=pyd.SchemeState)
@@ -171,6 +181,8 @@ def edit_state(id:int, state:pyd.UpdateState, db:Session=Depends(get_db), access
 
     db.add(state_db)
     db.commit()
+
+    logging.info(f"User with id: {access["user_id"]} changed state: {state_db.id} at {datetime.datetime.now()}")
     return state_db
 
 @app.delete("/api/post/{id}")
@@ -188,6 +200,7 @@ def delete_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_
     db.delete(state_db)
     db.commit()
 
+    logging.info(f"User with id: {access["user_id"]} deleted state: {state_db.id} at {datetime.datetime.now()}")
     return {"details": "Статья удалена"}
 
 
@@ -231,6 +244,7 @@ def create_comment(comment:pyd.CreateComment, db:Session=Depends(get_db), access
     db.add(comment_db)
     db.commit()
 
+    logging.info(f"User with id: {access["user_id"]} created comment: {comment_db.id} - {comment_db.text[:25:]} for state: {comment_db.state_id} at {datetime.datetime.now()}")
     return comment_db
 
 @app.put("/api/comment/{id}", response_model=pyd.SchemeComment)
@@ -264,11 +278,12 @@ def edit_comment(id:int, comment:pyd.CreateComment, db:Session=Depends(get_db), 
     db.add(comment_db)
     db.commit()
 
+    logging.info(f"User with id: {access["user_id"]} changed comment: {comment_db.id} - {comment_db.text[:25:]} for state: {comment_db.state_id} at {datetime.datetime.now()}")
     return comment_db
 
 
 @app.delete("/api/comment/{id}")
-def delete_comment(id:int, db:Session=Depends(get_db), access:m.User=Depends(get_db)):
+def delete_comment(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_handler.auth_wrapper)):
     comment_db = db.query(m.Comment).filter(
         m.Comment.id == id
     ).first()
@@ -282,6 +297,7 @@ def delete_comment(id:int, db:Session=Depends(get_db), access:m.User=Depends(get
     db.delete(comment_db)
     db.commit()
 
+    logging.info(f"User with id: {access["user_id"]} deleted comment: {comment_db.id} - {comment_db.text[:25:]} for state: {comment_db.state_id} at {datetime.datetime.now()}")
     return {"details": "Комментарий удалён!"}
 
 @app.get("/api/categories", response_model=List[pyd.BaseCategory])
@@ -311,6 +327,7 @@ def create_category(name:str, db:Session=Depends(get_db), access:m.User=Depends(
     db.add(category_db)
     db.commit()
 
+    logging.info(f"User with id: {access["user_id"]} created category: {category_db.name} at {datetime.datetime.now()}")
     return category_db
 
 @app.put("/api/category/{id}/{name}", response_model=pyd.BaseCategory)
@@ -332,6 +349,7 @@ def edit_category(id:int, name:str, db:Session=Depends(get_db), access:m.User=De
     db.add(category_db)
     db.commit()
 
+    logging.info(f"User with id: {access["user_id"]} changed category: {category_db.name} at {datetime.datetime.now()}")
     return category_db
 
 @app.delete("/api/category/{id}")
@@ -345,4 +363,5 @@ def delete_category(id:int, db:Session=Depends(get_db), access:m.User=Depends(au
     db.delete(category_db)
     db.commit()
 
+    logging.info(f"User with id: {access["user_id"]} deleted category: {category_db.name} at {datetime.datetime.now()}")
     return {"detail": "Категория удалена!"}
