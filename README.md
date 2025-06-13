@@ -42,12 +42,13 @@
    `python -m venv .venv`
 2. Активация .venv
    `source ./venv/bin/activate` - Linux
+   
    `.venv\Scripts\activate` - Windows
-3. Установка зависимостей
+4. Установка зависимостей
    `pip install -r requirements.txt`
-4. Запуска посева
+5. Запуска посева
    `python seed.py`
-5. Запуск
+6. Запуск
    `fastapi dev main.py`
 ## Описание к API
 ---
