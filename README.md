@@ -41,6 +41,7 @@
 1. Создание .venv
    `python -m venv .venv`
 2. Активация .venv
+
    `source ./venv/bin/activate` - Linux
    
    `.venv\Scripts\activate` - Windows
