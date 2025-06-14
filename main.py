@@ -95,13 +95,23 @@ def unlike_state(id:int, db:Session=Depends(get_db), access:m.User=Depends(auth_
 
 @app.get("/api/posts", response_model=List[pyd.SchemeState])
 def get_all_states(limit:None|int=Query(10,lt=100), page:None|int=Query(1), 
-                   category:None|int=Query(None), status:None|int=Query(None), 
-                   order_by:str=Query("desc"), db: Session = Depends(get_db)):
+                   category:None|str=Query(None), status:None|str=Query(None), 
+                   order_by:None|str=Query("desc"), db: Session = Depends(get_db)):
     states = db.query(m.State)
     if status:
-        states = states.filter(m.State.status_id == status)
+        status_db = db.query(m.Status).filter(
+            m.Status.name == status
+        ).first()
+        if not status_db:
+            raise HTTPException(404, "Такого статуса не существует!")
+        states = states.filter(m.State.status_id == status_db.id)
     if category:
-        states = states.filter(m.State.category_id == category)
+        category_db = db.query(m.Category).filter(
+            m.Category.name == category
+        ).first()
+        if not category_db:
+            raise HTTPException(404, "Такой категории не существует!")
+        states = states.filter(m.State.category_id == category_db.id)
     if order_by == "asc":
         states = states.order_by(m.State.likes_amount.asc())
     if order_by == "desc":
